@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getJobForApply } from '@/lib/actions/apply'
 import { screeningQuestions } from '@/lib/questions'
 import { notFound } from 'next/navigation'

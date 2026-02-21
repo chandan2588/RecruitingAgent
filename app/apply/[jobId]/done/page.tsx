@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getJobForApply } from '@/lib/actions/apply'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
