@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import type { Prisma } from '@prisma/client'
 
 async function getFirstTenant() {
   const tenant = await prisma.tenant.findFirst({
@@ -9,13 +8,16 @@ async function getFirstTenant() {
   return tenant
 }
 
-type JobWithCreatedBy = Prisma.JobGetPayload<{
-  include: {
-    createdBy: {
-      select: { name: true; email: true }
-    }
+interface JobWithCreatedBy {
+  id: string
+  title: string
+  location: string | null
+  isRemote: boolean
+  createdBy: {
+    name: string | null
+    email: string
   }
-}>
+}
 
 async function getJobs(tenantId: string): Promise<JobWithCreatedBy[]> {
   const jobs = await prisma.job.findMany({
@@ -27,7 +29,7 @@ async function getJobs(tenantId: string): Promise<JobWithCreatedBy[]> {
       },
     },
   })
-  return jobs
+  return jobs as JobWithCreatedBy[]
 }
 
 export default async function JobsPage() {
