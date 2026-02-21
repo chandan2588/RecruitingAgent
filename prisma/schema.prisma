@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ApplicationStage {
+  NEW
+  SCREENED
+  SHORTLISTED
+  SCHEDULED
+  INTERVIEWED
+  OFFERED
+  HIRED
+  REJECTED
+  DROPPED
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  jobs         Job[]
+  candidates   Candidate[]
+  applications Application[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  tenantId  String
+  email     String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  jobs   Job[]  @relation("JobCreatedBy")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  tenantId    String
+  createdById String
+  title       String
+  description String?
+  location    String?
+  isRemote    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy      User            @relation("JobCreatedBy", fields: [createdById], references: [id])
+  applications   Application[]
+  interviewSlots InterviewSlot[]
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+}
+
+model Candidate {
+  id        String   @id @default(cuid())
+  tenantId  String
+  email     String?
+  phone     String?
+  fullName  String?
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@unique([tenantId, email])
+  @@unique([tenantId, phone])
+}
+
+model Application {
+  id          String           @id @default(cuid())
+  tenantId    String
+  jobId       String
+  candidateId String
+  stage       ApplicationStage @default(NEW)
+  score       Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  job       Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  answers   Answer[]
+
+  @@index([tenantId, stage])
+  @@index([jobId, stage])
+  @@index([score])
+}
+
+model Answer {
+  id            String   @id @default(cuid())
+  applicationId String
+  questionKey   String
+  answerText    String?
+  createdAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([questionKey])
+}
+
+model InterviewSlot {
+  id        String   @id @default(cuid())
+  jobId     String
+  startsAt  DateTime
+  endsAt    DateTime
+  isBooked  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, startsAt])
+}
