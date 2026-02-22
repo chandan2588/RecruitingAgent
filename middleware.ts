@@ -1,11 +1,16 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
-const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)", "/apply(.*)", "/select-org"]);
+const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/select-org"]);
+const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)", "/apply(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   // Allow public routes
   if (isPublicRoute(req)) {
+    return;
+  }
+  
+  // Allow select-org page (for users without org)
+  if (req.nextUrl.pathname === "/select-org") {
     return;
   }
   
@@ -19,12 +24,12 @@ export default clerkMiddleware(async (auth, req) => {
       return authObj.redirectToSignIn({ returnBackUrl: req.url });
     }
     
-    // Must have active org
+    // If no active org, redirect to select-org page
     if (!orgId) {
       return Response.redirect(new URL("/select-org", req.url));
     }
     
-    // Must have proper role
+    // Must have proper role (admin or member)
     if (orgRole !== "org:admin" && orgRole !== "org:member") {
       return Response.redirect(new URL("/select-org", req.url));
     }

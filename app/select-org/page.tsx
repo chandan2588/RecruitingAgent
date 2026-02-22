@@ -1,57 +1,83 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useOrganizationList, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default async function SelectOrgPage() {
-  const session = await auth();
+export default function SelectOrgPage() {
+  const { userMemberships, setActive } = useOrganizationList({
+    userMemberships: {
+      infinite: true,
+    },
+  });
+  const { user } = useUser();
+  const router = useRouter();
 
-  // Not signed in - redirect to sign in
-  if (!session.userId) {
-    redirect("/sign-in");
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
-  // Has active org - redirect to dashboard
-  if (session.orgId) {
-    redirect("/dashboard");
-  }
+  const handleSetActive = async (orgId: string) => {
+    await setActive?.({ organization: orgId });
+    router.push("/dashboard");
+  };
+
+  const memberships = userMemberships?.data || [];
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full text-center">
-        <div className="mb-8">
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Select Organization</h1>
           <p className="mt-2 text-gray-600">
-            You need to select or create an organization to access the dashboard.
+            Choose an organization to access your dashboard
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6">
-          <p className="text-gray-700 mb-4">
-            You are signed in but not part of any organization yet.
-          </p>
-          
-          <div className="space-y-3">
-            <a
-              href="https://dashboard.clerk.com/last-active?path=organizations"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 font-medium"
-            >
-              Create Organization in Clerk
-            </a>
-            
-            <Link
-              href="/dashboard"
-              className="block w-full bg-gray-200 text-gray-800 py-2 px-4 rounded hover:bg-gray-300 font-medium"
-            >
-              Try Again
-            </Link>
-          </div>
+        <div className="space-y-3">
+          {memberships.length > 0 ? (
+            memberships.map((membership) => (
+              <button
+                key={membership.organization.id}
+                onClick={() => handleSetActive(membership.organization.id)}
+                className="w-full flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-lg">
+                  {membership.organization.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">
+                    {membership.organization.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 capitalize">
+                    Role: {membership.role.replace("org:", "")}
+                  </p>
+                </div>
+                <span className="text-blue-600 text-sm font-medium">Select →</span>
+              </button>
+            ))
+          ) : (
+            <div className="text-center py-8 bg-white rounded-lg border border-gray-200">
+              <p className="text-gray-600 mb-4">You are not a member of any organization.</p>
+              <a
+                href="https://dashboard.clerk.com/last-active?path=organizations"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium"
+              >
+                Create Organization in Clerk
+              </a>
+            </div>
+          )}
         </div>
 
-        <div className="text-sm text-gray-500">
-          <p className="mb-2">
-            After creating an organization in Clerk, click "Try Again" to access your dashboard.
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500 mb-4">
+            Signed in as {user.primaryEmailAddress?.emailAddress}
           </p>
           <Link
             href="/"
