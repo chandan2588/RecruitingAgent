@@ -3,33 +3,18 @@ export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 
-interface JobWithCreatedBy {
-  id: string
-  title: string
-  location: string | null
-  isRemote: boolean
-  createdBy: {
-    name: string | null
-    email: string
-  }
-}
-
-async function getFirstTenant() {
+async function getData() {
   try {
     const tenant = await prisma.tenant.findFirst({
       orderBy: { createdAt: 'asc' },
     })
-    return tenant
-  } catch (error) {
-    console.error('Database error:', error)
-    return null
-  }
-}
-
-async function getJobs(tenantId: string): Promise<JobWithCreatedBy[]> {
-  try {
+    
+    if (!tenant) {
+      return { tenant: null, jobs: [], error: null }
+    }
+    
     const jobs = await prisma.job.findMany({
-      where: { tenantId },
+      where: { tenantId: tenant.id },
       orderBy: { createdAt: 'desc' },
       include: {
         createdBy: {
@@ -37,35 +22,29 @@ async function getJobs(tenantId: string): Promise<JobWithCreatedBy[]> {
         },
       },
     })
-    return jobs as JobWithCreatedBy[]
-  } catch (error) {
-    console.error('Database error:', error)
-    return []
+    
+    return { tenant, jobs, error: null }
+  } catch (e) {
+    console.error('Database error:', e)
+    return { 
+      tenant: null, 
+      jobs: [], 
+      error: e instanceof Error ? e.message : 'Database connection failed' 
+    }
   }
 }
 
 export default async function JobsPage() {
-  let error = null
-  let tenant = null
-  let jobs: JobWithCreatedBy[] = []
-  
-  try {
-    tenant = await getFirstTenant()
-    if (tenant) {
-      jobs = await getJobs(tenant.id)
-    }
-  } catch (e) {
-    error = e instanceof Error ? e.message : 'Database connection error'
-  }
+  const { tenant, jobs, error } = await getData()
   
   if (error) {
     return (
       <div className="p-8">
         <h1 className="text-2xl font-bold mb-4">Jobs</h1>
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          <p className="font-medium">Error connecting to database</p>
+          <p className="font-medium">Database Error</p>
           <p className="text-sm mt-1">{error}</p>
-          <p className="text-sm mt-2">Please make sure DATABASE_URL is set in environment variables.</p>
+          <p className="text-sm mt-2">Please check that DATABASE_URL is set in Vercel environment variables.</p>
         </div>
       </div>
     )
@@ -75,7 +54,7 @@ export default async function JobsPage() {
     return (
       <div className="p-8">
         <h1 className="text-2xl font-bold mb-4">Jobs</h1>
-        <p className="text-gray-600">No tenant found. Please create a tenant first.</p>
+        <p className="text-gray-600">No tenant found. Please run the seed script.</p>
       </div>
     )
   }
@@ -107,27 +86,20 @@ export default async function JobsPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {jobs.map((job) => (
+              {jobs.map((job: any) => (
                 <tr key={job.id} className="hover:bg-gray-50">
                   <td className="p-4 font-medium">{job.title}</td>
                   <td className="p-4 text-gray-600">{job.location || '-'}</td>
                   <td className="p-4">
                     {job.isRemote ? (
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                        Remote
-                      </span>
+                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Remote</span>
                     ) : (
-                      <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
-                        On-site
-                      </span>
+                      <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">On-site</span>
                     )}
                   </td>
-                  <td className="p-4 text-gray-600">{job.createdBy.name || job.createdBy.email}</td>
+                  <td className="p-4 text-gray-600">{job.createdBy?.name || job.createdBy?.email}</td>
                   <td className="p-4">
-                    <Link
-                      href={`/dashboard/jobs/${job.id}`}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
+                    <Link href={`/dashboard/jobs/${job.id}`} className="text-blue-600 hover:text-blue-800">
                       Edit
                     </Link>
                   </td>
