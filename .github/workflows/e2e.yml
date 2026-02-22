@@ -33,7 +33,28 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Build application
+      - name: Seed E2E test data
+        id: seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          E2E_CLERK_ORG_ID: ${{ secrets.E2E_CLERK_ORG_ID }}
+          E2E_CLERK_USER_ID: ${{ secrets.E2E_CLERK_USER_ID }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+        run: |
+          echo "Creating E2E test job..."
+          JOB_JSON=$(npx tsx e2e/helpers/seed.ts)
+          echo "Seed output: $JOB_JSON"
+          
+          # Extract jobId from JSON output
+          E2E_JOB_ID=$(echo "$JOB_JSON" | node -e "const data=require('fs').readFileSync(0,'utf8'); console.log(JSON.parse(data).jobId)")
+          
+          echo "Created job with ID: $E2E_JOB_ID"
+          echo "E2E_JOB_ID=$E2E_JOB_ID" >> $GITHUB_ENV
+          
+          # Also output for debugging
+          echo "jobId=$E2E_JOB_ID" >> $GITHUB_OUTPUT
+
+      - name: Build application (if testing locally)
         if: ${{ !env.E2E_BASE_URL && !github.event.inputs.base_url }}
         run: npm run build
 
@@ -42,8 +63,11 @@ jobs:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || secrets.E2E_BASE_URL || '' }}
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-          E2E_JOB_ID: ${{ secrets.E2E_JOB_ID }}
-        run: npm run test:e2e
+          E2E_JOB_ID: ${{ env.E2E_JOB_ID }}
+        run: |
+          echo "Running tests against: ${E2E_BASE_URL:-http://localhost:3000}"
+          echo "Using test job ID: $E2E_JOB_ID"
+          npm run test:e2e
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

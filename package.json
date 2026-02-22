@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:seed": "tsx e2e/helpers/seed.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

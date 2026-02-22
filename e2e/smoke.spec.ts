@@ -54,7 +54,11 @@ test.describe("Smoke Tests", () => {
     const jobId = process.env.E2E_JOB_ID;
 
     if (!jobId) {
-      throw new Error("E2E_JOB_ID environment variable must be set");
+      throw new Error(
+        "E2E_JOB_ID environment variable must be set. " +
+        "Run 'npm run test:e2e:seed' first to create a test job, " +
+        "or ensure CI sets it from the seed script output."
+      );
     }
 
     const uniqueEmail = generateUniqueEmail();
