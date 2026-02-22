@@ -16,8 +16,10 @@ export default function SelectOrgPage() {
   }, [organization, router]);
 
   const handleSelect = async (orgId: string) => {
-    await setActive({ organization: orgId });
-    // Router will redirect when org becomes active via useEffect
+    if (setActive) {
+      await setActive({ organization: orgId });
+      // Router will redirect when org becomes active via useEffect
+    }
   };
 
   if (!isLoaded) {
