@@ -27,6 +27,7 @@ async function main() {
   // Create 1 User
   const user = await prisma.user.create({
     data: {
+      clerkUserId: 'seed_user_001',
       email: 'recruiter@acme.com',
       name: 'Jane Recruiter',
       tenantId: tenant.id,

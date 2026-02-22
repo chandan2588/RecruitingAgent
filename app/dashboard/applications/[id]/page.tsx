@@ -1,91 +1,147 @@
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
-import { prisma } from '@/lib/prisma'
-import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ApplicationStage } from '@prisma/client'
-import { revalidatePath } from 'next/cache'
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUserAndTenant } from "@/lib/auth";
+import { ApplicationStage } from "@prisma/client";
 
 interface ApplicationDetailPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
-async function getApplication(id: string) {
-  const application = await prisma.application.findUnique({
-    where: { id },
+async function getApplication(id: string, tenantId: string) {
+  const application = await prisma.application.findFirst({
+    where: { id, tenantId },
     include: {
-      candidate: true,
+      candidate: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          phone: true,
+          location: true,
+        },
+      },
       job: {
-        include: {
-          tenant: {
-            select: { name: true },
-          },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          location: true,
+          isRemote: true,
         },
       },
       answers: {
-        orderBy: { createdAt: 'asc' },
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          questionKey: true,
+          answerText: true,
+          createdAt: true,
+        },
       },
     },
-  })
-  return application
+  });
+
+  return application;
 }
 
-async function updateStage(formData: FormData) {
-  'use server'
-  
-  const id = formData.get('id') as string
-  const stage = formData.get('stage') as ApplicationStage
-  
-  await prisma.application.update({
-    where: { id },
-    data: { stage },
-  })
-  
-  revalidatePath(`/dashboard/applications/${id}`)
-  redirect(`/dashboard/applications/${id}`)
-}
+async function updateStage(formData: FormData): Promise<void> {
+  "use server";
 
-function getStageBadgeColor(stage: ApplicationStage) {
-  const colors: Record<ApplicationStage, string> = {
-    NEW: 'bg-gray-100 text-gray-800',
-    SCREENED: 'bg-blue-100 text-blue-800',
-    SHORTLISTED: 'bg-purple-100 text-purple-800',
-    SCHEDULED: 'bg-yellow-100 text-yellow-800',
-    INTERVIEWED: 'bg-orange-100 text-orange-800',
-    OFFERED: 'bg-pink-100 text-pink-800',
-    HIRED: 'bg-green-100 text-green-800',
-    REJECTED: 'bg-red-100 text-red-800',
-    DROPPED: 'bg-gray-100 text-gray-600',
+  const id = formData.get("id") as string;
+  const stage = formData.get("stage") as ApplicationStage;
+
+  if (!id || !stage) {
+    throw new Error("Missing required fields");
   }
-  return colors[stage] || 'bg-gray-100 text-gray-800'
+
+  const { tenantId } = await getCurrentUserAndTenant();
+
+  await prisma.application.updateMany({
+    where: { id, tenantId },
+    data: { stage },
+  });
+
+  revalidatePath(`/dashboard/applications/${id}`);
+  redirect(`/dashboard/applications/${id}`);
+}
+
+async function updateNotes(formData: FormData): Promise<void> {
+  "use server";
+
+  const id = formData.get("id") as string;
+  const notes = formData.get("notes") as string;
+
+  if (!id) {
+    throw new Error("Missing application id");
+  }
+
+  const { tenantId } = await getCurrentUserAndTenant();
+
+  await prisma.application.updateMany({
+    where: { id, tenantId },
+    data: { notes: notes || null },
+  });
+
+  revalidatePath(`/dashboard/applications/${id}`);
+  redirect(`/dashboard/applications/${id}`);
+}
+
+function getStageBadgeColor(stage: ApplicationStage): string {
+  const colors: Record<ApplicationStage, string> = {
+    NEW: "bg-gray-100 text-gray-800",
+    SCREENED: "bg-blue-100 text-blue-800",
+    SHORTLISTED: "bg-purple-100 text-purple-800",
+    SCHEDULED: "bg-yellow-100 text-yellow-800",
+    INTERVIEWED: "bg-orange-100 text-orange-800",
+    OFFERED: "bg-pink-100 text-pink-800",
+    HIRED: "bg-green-100 text-green-800",
+    REJECTED: "bg-red-100 text-red-800",
+    DROPPED: "bg-gray-100 text-gray-600",
+  };
+  return colors[stage] || "bg-gray-100 text-gray-800";
 }
 
 function getScoreBreakdown(score: number) {
-  // Approximate breakdown based on scoring algorithm
   return {
     experience: Math.min(30, Math.round(score * 0.3)),
     react: Math.min(30, Math.round(score * 0.3)),
     systemDesign: Math.min(20, Math.round(score * 0.2)),
-    availability: Math.min(20, score - Math.min(30, Math.round(score * 0.3)) - Math.min(30, Math.round(score * 0.3)) - Math.min(20, Math.round(score * 0.2))),
-  }
+    availability: Math.min(
+      20,
+      score -
+        Math.min(30, Math.round(score * 0.3)) -
+        Math.min(30, Math.round(score * 0.3)) -
+        Math.min(20, Math.round(score * 0.2))
+    ),
+  };
 }
 
-const stages = Object.values(ApplicationStage)
+const stages = Object.values(ApplicationStage);
 
-export default async function ApplicationDetailPage({ params }: ApplicationDetailPageProps) {
-  const { id } = await params
-  const application = await getApplication(id)
+export default async function ApplicationDetailPage({
+  params,
+}: ApplicationDetailPageProps) {
+  const { tenantId } = await getCurrentUserAndTenant();
+  const { id } = await params;
+
+  const application = await getApplication(id, tenantId);
 
   if (!application) {
-    notFound()
+    notFound();
   }
 
-  const scoreBreakdown = getScoreBreakdown(application.score)
+  const scoreBreakdown = getScoreBreakdown(application.score);
 
   return (
     <div className="p-8 max-w-4xl mx-auto bg-white min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Application Details</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Application Details
+        </h1>
         <Link
           href="/dashboard/applications"
           className="text-blue-600 hover:text-blue-800 font-medium"
@@ -98,7 +154,9 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
         <form action={updateStage} className="flex items-center gap-4">
           <input type="hidden" name="id" value={application.id} />
-          <label className="text-sm font-medium text-gray-700">Update Stage:</label>
+          <label className="text-sm font-medium text-gray-700">
+            Update Stage:
+          </label>
           <select
             name="stage"
             defaultValue={application.stage}
@@ -114,7 +172,7 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
             type="submit"
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium"
           >
-            Save
+            Save Stage
           </button>
         </form>
       </div>
@@ -122,23 +180,33 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Candidate Profile */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Candidate Profile</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Candidate Profile
+          </h2>
           <div className="space-y-3">
             <div>
               <span className="text-sm text-gray-600">Name:</span>
-              <p className="font-medium text-gray-900">{application.candidate.fullName || 'N/A'}</p>
+              <p className="font-medium text-gray-900">
+                {application.candidate.fullName || "N/A"}
+              </p>
             </div>
             <div>
               <span className="text-sm text-gray-600">Email:</span>
-              <p className="font-medium text-gray-900">{application.candidate.email || 'N/A'}</p>
+              <p className="font-medium text-gray-900">
+                {application.candidate.email || "N/A"}
+              </p>
             </div>
             <div>
               <span className="text-sm text-gray-600">Phone:</span>
-              <p className="font-medium text-gray-900">{application.candidate.phone || 'N/A'}</p>
+              <p className="font-medium text-gray-900">
+                {application.candidate.phone || "N/A"}
+              </p>
             </div>
             <div>
               <span className="text-sm text-gray-600">Location:</span>
-              <p className="font-medium text-gray-900">{application.candidate.location || 'N/A'}</p>
+              <p className="font-medium text-gray-900">
+                {application.candidate.location || "N/A"}
+              </p>
             </div>
             <div>
               <span className="text-sm text-gray-600">Applied:</span>
@@ -151,19 +219,32 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
 
         {/* Job Info & Score */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Job & Score</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Job & Score
+          </h2>
           <div className="space-y-3 mb-6">
             <div>
               <span className="text-sm text-gray-600">Position:</span>
-              <p className="font-medium text-gray-900">{application.job.title}</p>
+              <p className="font-medium text-gray-900">
+                {application.job.title}
+              </p>
             </div>
-            <div>
-              <span className="text-sm text-gray-600">Company:</span>
-              <p className="font-medium text-gray-900">{application.job.tenant.name}</p>
-            </div>
+            {application.job.location && (
+              <div>
+                <span className="text-sm text-gray-600">Location:</span>
+                <p className="font-medium text-gray-900">
+                  {application.job.location}
+                  {application.job.isRemote && " (Remote)"}
+                </p>
+              </div>
+            )}
             <div>
               <span className="text-sm text-gray-600">Current Stage:</span>
-              <span className={`inline-block ml-2 px-2 py-1 rounded text-xs font-medium ${getStageBadgeColor(application.stage)}`}>
+              <span
+                className={`inline-block ml-2 px-2 py-1 rounded text-xs font-medium ${getStageBadgeColor(
+                  application.stage
+                )}`}
+              >
                 {application.stage}
               </span>
             </div>
@@ -179,48 +260,64 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
                 <span className="text-sm text-gray-600">Experience</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full" 
-                      style={{ width: `${(scoreBreakdown.experience / 30) * 100}%` }}
+                    <div
+                      className="bg-blue-500 h-2 rounded-full"
+                      style={{
+                        width: `${(scoreBreakdown.experience / 30) * 100}%`,
+                      }}
                     ></div>
                   </div>
-                  <span className="text-sm font-medium w-8">{scoreBreakdown.experience}</span>
+                  <span className="text-sm font-medium w-8">
+                    {scoreBreakdown.experience}
+                  </span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">React/Next</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full" 
-                      style={{ width: `${(scoreBreakdown.react / 30) * 100}%` }}
+                    <div
+                      className="bg-blue-500 h-2 rounded-full"
+                      style={{
+                        width: `${(scoreBreakdown.react / 30) * 100}%`,
+                      }}
                     ></div>
                   </div>
-                  <span className="text-sm font-medium w-8">{scoreBreakdown.react}</span>
+                  <span className="text-sm font-medium w-8">
+                    {scoreBreakdown.react}
+                  </span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">System Design</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full" 
-                      style={{ width: `${(scoreBreakdown.systemDesign / 20) * 100}%` }}
+                    <div
+                      className="bg-blue-500 h-2 rounded-full"
+                      style={{
+                        width: `${(scoreBreakdown.systemDesign / 20) * 100}%`,
+                      }}
                     ></div>
                   </div>
-                  <span className="text-sm font-medium w-8">{scoreBreakdown.systemDesign}</span>
+                  <span className="text-sm font-medium w-8">
+                    {scoreBreakdown.systemDesign}
+                  </span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Availability</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full" 
-                      style={{ width: `${(scoreBreakdown.availability / 20) * 100}%` }}
+                    <div
+                      className="bg-blue-500 h-2 rounded-full"
+                      style={{
+                        width: `${(scoreBreakdown.availability / 20) * 100}%`,
+                      }}
                     ></div>
                   </div>
-                  <span className="text-sm font-medium w-8">{scoreBreakdown.availability}</span>
+                  <span className="text-sm font-medium w-8">
+                    {scoreBreakdown.availability}
+                  </span>
                 </div>
               </div>
             </div>
@@ -229,26 +326,56 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
       </div>
 
       {/* Answers */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Screening Answers</h2>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Screening Answers
+        </h2>
         {application.answers.length === 0 ? (
           <p className="text-gray-600">No answers submitted.</p>
         ) : (
           <div className="space-y-4">
             {application.answers.map((answer) => (
-              <div key={answer.id} className="border-b border-gray-100 pb-4 last:border-0">
+              <div
+                key={answer.id}
+                className="border-b border-gray-100 pb-4 last:border-0"
+              >
                 <h3 className="text-sm font-medium text-gray-900 mb-1 capitalize">
-                  {answer.questionKey.replace(/_/g, ' ')}
+                  {answer.questionKey.replace(/_/g, " ")}
                 </h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{answer.answerText || 'No answer'}</p>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {answer.answerText || "No answer"}
+                </p>
               </div>
             ))}
           </div>
         )}
       </div>
 
+      {/* Notes */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Notes</h2>
+        <form action={updateNotes}>
+          <input type="hidden" name="id" value={application.id} />
+          <textarea
+            name="notes"
+            defaultValue={application.notes || ""}
+            rows={4}
+            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Add notes about this candidate..."
+          />
+          <div className="mt-3">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium"
+            >
+              Save Notes
+            </button>
+          </div>
+        </form>
+      </div>
+
       {/* Timeline */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mt-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Timeline</h2>
         <div className="space-y-3">
           <div className="flex items-center gap-3">
@@ -268,5 +395,5 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
         </div>
       </div>
     </div>
-  )
+  );
 }
