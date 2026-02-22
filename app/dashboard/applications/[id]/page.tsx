@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUserAndTenant } from "@/lib/auth";
+import { getTenantIdFromActiveOrg } from "@/lib/tenant";
 import { ApplicationStage } from "@prisma/client";
 
 interface ApplicationDetailPageProps {
@@ -58,7 +58,7 @@ async function updateStage(formData: FormData): Promise<void> {
     throw new Error("Missing required fields");
   }
 
-  const { tenantId } = await getCurrentUserAndTenant();
+  const { tenantId } = await getTenantIdFromActiveOrg();
 
   await prisma.application.updateMany({
     where: { id, tenantId },
@@ -79,7 +79,7 @@ async function updateNotes(formData: FormData): Promise<void> {
     throw new Error("Missing application id");
   }
 
-  const { tenantId } = await getCurrentUserAndTenant();
+  const { tenantId } = await getTenantIdFromActiveOrg();
 
   await prisma.application.updateMany({
     where: { id, tenantId },
@@ -125,7 +125,7 @@ const stages = Object.values(ApplicationStage);
 export default async function ApplicationDetailPage({
   params,
 }: ApplicationDetailPageProps) {
-  const { tenantId } = await getCurrentUserAndTenant();
+  const { tenantId } = await getTenantIdFromActiveOrg();
   const { id } = await params;
 
   const application = await getApplication(id, tenantId);

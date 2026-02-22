@@ -1,17 +1,17 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { getCurrentUserAndTenant } from "@/lib/auth";
+import { getTenantIdFromActiveOrg } from "@/lib/tenant";
 
 export default async function DashboardHomePage() {
-  const { tenantName } = await getCurrentUserAndTenant();
+  const { tenantName } = await getTenantIdFromActiveOrg();
 
   return (
     <div className="p-8 max-w-6xl mx-auto bg-white min-h-screen">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-2">
-          Workspace: <span className="font-medium text-gray-900">{tenantName}</span>
+          Organization: <span className="font-medium text-gray-900">{tenantName}</span>
         </p>
       </div>
 
@@ -92,7 +92,7 @@ export default async function DashboardHomePage() {
           </li>
           <li className="flex items-center gap-2">
             <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-            Share job links with candidates to apply
+            Invite team members to collaborate
           </li>
         </ul>
       </div>

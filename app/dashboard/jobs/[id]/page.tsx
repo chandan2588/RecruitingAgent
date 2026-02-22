@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUserAndTenant } from "@/lib/auth";
+import { getTenantIdFromActiveOrg } from "@/lib/tenant";
 
 interface EditJobPageProps {
   params: Promise<{ id: string }>;
@@ -30,7 +30,7 @@ async function updateJob(formData: FormData) {
     throw new Error("Title is required");
   }
 
-  const { tenantId } = await getCurrentUserAndTenant();
+  const { tenantId } = await getTenantIdFromActiveOrg();
 
   await prisma.job.updateMany({
     where: { id, tenantId },
@@ -47,7 +47,7 @@ async function updateJob(formData: FormData) {
 }
 
 export default async function EditJobPage({ params }: EditJobPageProps) {
-  const { tenantId } = await getCurrentUserAndTenant();
+  const { tenantId } = await getTenantIdFromActiveOrg();
   const { id } = await params;
   const job = await getJob(id, tenantId);
 

@@ -2,13 +2,40 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUserAndTenant } from "@/lib/auth";
+import { getTenantIdFromActiveOrg } from "@/lib/tenant";
 
 async function createJob(formData: FormData) {
   "use server";
 
-  const { user } = await getCurrentUserAndTenant();
+  const { tenantId } = await getTenantIdFromActiveOrg();
+  const session = await auth();
+  
+  if (!session.userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Find the User record for this Clerk user
+  let user = await prisma.user.findFirst({
+    where: { 
+      tenantId,
+      clerkUserId: session.userId 
+    },
+  });
+
+  // If no user record exists, create one
+  if (!user) {
+    const email = session.sessionClaims?.email as string || "unknown@example.com";
+    user = await prisma.user.create({
+      data: {
+        clerkUserId: session.userId,
+        email,
+        name: session.sessionClaims?.name as string || null,
+        tenantId,
+      },
+    });
+  }
 
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
@@ -25,7 +52,7 @@ async function createJob(formData: FormData) {
       description: description || null,
       location: location || null,
       isRemote,
-      tenantId: user.tenantId,
+      tenantId,
       createdById: user.id,
     },
   });

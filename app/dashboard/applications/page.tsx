@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUserAndTenant } from "@/lib/auth";
+import { getTenantIdFromActiveOrg } from "@/lib/tenant";
 import { ApplicationStage } from "@prisma/client";
 
 interface ApplicationsPageProps {
@@ -104,7 +104,7 @@ function getScoreColor(score: number): string {
 export default async function ApplicationsPage({
   searchParams,
 }: ApplicationsPageProps) {
-  const { tenantId } = await getCurrentUserAndTenant();
+  const { tenantId } = await getTenantIdFromActiveOrg();
   const params = await searchParams;
 
   const filters = {
@@ -120,16 +120,6 @@ export default async function ApplicationsPage({
 
   const stages = Object.values(ApplicationStage);
 
-  // Build query string helper
-  const buildQueryString = (updates: Record<string, string | undefined>) => {
-    const params = new URLSearchParams();
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value) params.set(key, value);
-    });
-    const query = params.toString();
-    return query ? `?${query}` : "";
-  };
-
   return (
     <div className="p-8 max-w-6xl mx-auto bg-white min-h-screen">
       <div className="flex justify-between items-center mb-6">
@@ -144,20 +134,22 @@ export default async function ApplicationsPage({
 
       {/* Filters */}
       <div className="bg-gray-50 p-4 rounded-lg mb-6">
-        <div className="flex flex-wrap gap-4 items-end">
+        <form className="flex flex-wrap gap-4 items-end">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Job
             </label>
             <select
-              value={filters.jobId || ""}
+              name="jobId"
+              defaultValue={filters.jobId || ""}
               onChange={(e) => {
-                const value = e.target.value;
-                window.location.href = `/dashboard/applications${buildQueryString({
-                  jobId: value || undefined,
-                  stage: filters.stage,
-                  minScore: filters.minScore?.toString(),
-                })}`;
+                const params = new URLSearchParams(window.location.search);
+                if (e.target.value) {
+                  params.set("jobId", e.target.value);
+                } else {
+                  params.delete("jobId");
+                }
+                window.location.href = `/dashboard/applications?${params.toString()}`;
               }}
               className="border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -175,14 +167,16 @@ export default async function ApplicationsPage({
               Stage
             </label>
             <select
-              value={filters.stage || ""}
+              name="stage"
+              defaultValue={filters.stage || ""}
               onChange={(e) => {
-                const value = e.target.value;
-                window.location.href = `/dashboard/applications${buildQueryString({
-                  jobId: filters.jobId,
-                  stage: value || undefined,
-                  minScore: filters.minScore?.toString(),
-                })}`;
+                const params = new URLSearchParams(window.location.search);
+                if (e.target.value) {
+                  params.set("stage", e.target.value);
+                } else {
+                  params.delete("stage");
+                }
+                window.location.href = `/dashboard/applications?${params.toString()}`;
               }}
               className="border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -200,14 +194,16 @@ export default async function ApplicationsPage({
               Min Score
             </label>
             <select
-              value={filters.minScore?.toString() || ""}
+              name="minScore"
+              defaultValue={filters.minScore?.toString() || ""}
               onChange={(e) => {
-                const value = e.target.value;
-                window.location.href = `/dashboard/applications${buildQueryString({
-                  jobId: filters.jobId,
-                  stage: filters.stage,
-                  minScore: value || undefined,
-                })}`;
+                const params = new URLSearchParams(window.location.search);
+                if (e.target.value) {
+                  params.set("minScore", e.target.value);
+                } else {
+                  params.delete("minScore");
+                }
+                window.location.href = `/dashboard/applications?${params.toString()}`;
               }}
               className="border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -226,7 +222,7 @@ export default async function ApplicationsPage({
               Clear Filters
             </Link>
           </div>
-        </div>
+        </form>
       </div>
 
       {applications.length === 0 ? (

@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUserAndTenant } from "@/lib/auth";
+import { getTenantIdFromActiveOrg } from "@/lib/tenant";
 
 interface JobWithCreatedBy {
   id: string;
@@ -35,7 +35,7 @@ async function getJobs(tenantId: string): Promise<JobWithCreatedBy[]> {
 }
 
 export default async function JobsPage() {
-  const { tenantId } = await getCurrentUserAndTenant();
+  const { tenantId } = await getTenantIdFromActiveOrg();
   const jobs = await getJobs(tenantId);
 
   return (

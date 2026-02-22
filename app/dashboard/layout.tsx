@@ -1,11 +1,15 @@
-import { UserButton } from "@clerk/nextjs";
+import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+  const orgId = session.orgId;
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -14,35 +18,58 @@ export default function DashboardLayout({
           <div className="flex justify-between items-center h-16">
             {/* Logo & Nav */}
             <div className="flex items-center gap-8">
-              <Link href="/dashboard" className="text-xl font-bold text-gray-900">
+              <Link
+                href="/dashboard"
+                className="text-xl font-bold text-gray-900"
+              >
                 Recruiting Agent
               </Link>
-              
-              <nav className="hidden sm:flex items-center gap-6">
-                <Link 
-                  href="/dashboard" 
-                  className="text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  Home
-                </Link>
-                <Link 
-                  href="/dashboard/jobs" 
-                  className="text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  Jobs
-                </Link>
-                <Link 
-                  href="/dashboard/applications" 
-                  className="text-gray-600 hover:text-gray-900 font-medium"
-                >
-                  Applications
-                </Link>
-              </nav>
+
+              {orgId && (
+                <nav className="hidden sm:flex items-center gap-6">
+                  <Link
+                    href="/dashboard"
+                    className="text-gray-600 hover:text-gray-900 font-medium"
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    href="/dashboard/jobs"
+                    className="text-gray-600 hover:text-gray-900 font-medium"
+                  >
+                    Jobs
+                  </Link>
+                  <Link
+                    href="/dashboard/applications"
+                    className="text-gray-600 hover:text-gray-900 font-medium"
+                  >
+                    Applications
+                  </Link>
+                  <Link
+                    href="/dashboard/team"
+                    className="text-gray-600 hover:text-gray-900 font-medium"
+                  >
+                    Team
+                  </Link>
+                </nav>
+              )}
             </div>
 
-            {/* User Menu */}
+            {/* Org Switcher & User Menu */}
             <div className="flex items-center gap-4">
-              <UserButton 
+              {orgId && (
+                <OrganizationSwitcher
+                  hidePersonal={true}
+                  afterSelectOrganizationUrl="/dashboard"
+                  appearance={{
+                    elements: {
+                      organizationSwitcherTrigger:
+                        "px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50",
+                    },
+                  }}
+                />
+              )}
+              <UserButton
                 afterSignOutUrl="/"
                 appearance={{
                   elements: {
@@ -55,28 +82,36 @@ export default function DashboardLayout({
         </div>
 
         {/* Mobile Nav */}
-        <div className="sm:hidden border-t border-gray-200">
-          <div className="flex justify-around py-3">
-            <Link 
-              href="/dashboard" 
-              className="text-sm text-gray-600 hover:text-gray-900 font-medium"
-            >
-              Home
-            </Link>
-            <Link 
-              href="/dashboard/jobs" 
-              className="text-sm text-gray-600 hover:text-gray-900 font-medium"
-            >
-              Jobs
-            </Link>
-            <Link 
-              href="/dashboard/applications" 
-              className="text-sm text-gray-600 hover:text-gray-900 font-medium"
-            >
-              Applications
-            </Link>
+        {orgId && (
+          <div className="sm:hidden border-t border-gray-200">
+            <div className="flex justify-around py-3">
+              <Link
+                href="/dashboard"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Home
+              </Link>
+              <Link
+                href="/dashboard/jobs"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Jobs
+              </Link>
+              <Link
+                href="/dashboard/applications"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Applications
+              </Link>
+              <Link
+                href="/dashboard/team"
+                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Team
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       {/* Main Content */}
