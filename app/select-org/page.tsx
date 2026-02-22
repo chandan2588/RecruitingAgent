@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function SelectOrgPage() {
-  const { isLoaded, setActive, organizationList } = useOrganizationList();
+  const { isLoaded, setActive, userMemberships } = useOrganizationList();
   const { organization } = useOrganization();
   const router = useRouter();
 
@@ -28,6 +28,8 @@ export default function SelectOrgPage() {
     );
   }
 
+  const organizations = userMemberships?.data?.map((m) => m.organization) || [];
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 max-w-md w-full">
@@ -38,7 +40,7 @@ export default function SelectOrgPage() {
           Choose an organization to access your dashboard
         </p>
 
-        {organizationList.length === 0 ? (
+        {organizations.length === 0 ? (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <p className="text-sm text-amber-800">
               You are not a member of any organization yet.
@@ -54,18 +56,14 @@ export default function SelectOrgPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {organizationList.map(({ organization }) => (
+            {organizations.map((org) => (
               <button
-                key={organization.id}
-                onClick={() => handleSelect(organization.id)}
+                key={org.id}
+                onClick={() => handleSelect(org.id)}
                 className="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
               >
-                <div className="font-medium text-gray-900">
-                  {organization.name}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {organization.id}
-                </div>
+                <div className="font-medium text-gray-900">{org.name}</div>
+                <div className="text-xs text-gray-500 mt-1">{org.id}</div>
               </button>
             ))}
           </div>
