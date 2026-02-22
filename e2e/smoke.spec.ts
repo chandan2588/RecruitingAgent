@@ -10,7 +10,10 @@ function generateUniqueEmail(): string {
 /**
  * Helper to wait for navigation and page load
  */
-async function waitForPageLoad(page: Page, urlPattern: RegExp | string): Promise<void> {
+async function waitForPageLoad(
+  page: Page,
+  urlPattern: RegExp | string
+): Promise<void> {
   await page.waitForURL(urlPattern, { timeout: 30000 });
   await page.waitForLoadState("networkidle");
 }
@@ -36,7 +39,9 @@ test.describe("Smoke Tests", () => {
 
     // Assert the jobs table or "No jobs" message is visible
     const jobsTable = page.locator("table");
-    const noJobsMessage = page.getByText(/No jobs found|Create your first job/i);
+    const noJobsMessage = page.getByText(
+      /No jobs found|Create your first job/i
+    );
 
     await expect(jobsTable.or(noJobsMessage)).toBeVisible();
 
@@ -47,17 +52,19 @@ test.describe("Smoke Tests", () => {
   });
 
   /**
-   * Test: Candidate can apply for a job
-   * Tests the full candidate application flow from job listing to submission
+   * Test: Candidate can apply for a job and is redirected to portal
+   * Tests the full candidate application flow from job listing to portal
    */
-  test("Candidate apply redirects to portal", async ({ page }) => {
+  test("Candidate apply redirects to portal my-applications", async ({
+    page,
+  }) => {
     const jobId = process.env.E2E_JOB_ID;
 
     if (!jobId) {
       throw new Error(
         "E2E_JOB_ID environment variable must be set. " +
-        "Run 'npm run test:e2e:seed' first to create a test job, " +
-        "or ensure CI sets it from the seed script output."
+          "Run 'npm run test:e2e:seed' first to create a test job, " +
+          "or ensure CI sets it from the seed script output."
       );
     }
 
@@ -92,58 +99,79 @@ test.describe("Smoke Tests", () => {
     // Step 4: Fill screening questions (Step 2 of application)
     await waitForPageLoad(page, `/apply/${jobId}/screen`);
 
-    // Fill in screening answers (adjust selectors based on your actual form)
-    // These are common screening questions - adjust as needed
-    const experienceInput = page.locator('input[name="experience"], textarea[name="experience"]').first();
-    if (await experienceInput.isVisible().catch(() => false)) {
-      await experienceInput.fill("5+ years of relevant experience");
+    // Fill in screening answers based on actual question keys from lib/questions.ts
+    const yearsInput = page.locator('input[name="yearsExperience"]').first();
+    if (await yearsInput.isVisible().catch(() => false)) {
+      await yearsInput.fill("5");
     }
 
-    const reactInput = page.locator('input[name="react_experience"], textarea[name="react_experience"]').first();
+    const reactInput = page.locator('input[name="reactExperience"]').first();
     if (await reactInput.isVisible().catch(() => false)) {
-      await reactInput.fill("3 years working with React and Next.js");
+      await reactInput.fill("3");
     }
 
-    const systemDesignInput = page.locator('input[name="system_design"], textarea[name="system_design"]').first();
+    const currentRoleInput = page.locator('input[name="currentRole"]').first();
+    if (await currentRoleInput.isVisible().catch(() => false)) {
+      await currentRoleInput.fill("Senior Developer");
+    }
+
+    const systemDesignInput = page
+      .locator('textarea[name="systemDesign"]')
+      .first();
     if (await systemDesignInput.isVisible().catch(() => false)) {
-      await systemDesignInput.fill("Experience designing scalable systems");
+      await systemDesignInput.fill(
+        "Designed a scalable microservices architecture with Redis caching and PostgreSQL database. Implemented load balancing and monitoring with AWS CloudWatch."
+      );
     }
 
-    const availabilityInput = page.locator('input[name="availability"], textarea[name="availability"]').first();
-    if (await availabilityInput.isVisible().catch(() => false)) {
-      await availabilityInput.fill("2 weeks notice");
+    const availabilitySelect = page
+      .locator('select[name="availability"]')
+      .first();
+    if (await availabilitySelect.isVisible().catch(() => false)) {
+      await availabilitySelect.selectOption("2weeks");
+    }
+
+    const noticeSelect = page.locator('select[name="noticePeriod"]').first();
+    if (await noticeSelect.isVisible().catch(() => false)) {
+      await noticeSelect.selectOption("2weeks");
+    }
+
+    const preferredWorkSelect = page
+      .locator('select[name="preferredWork"]')
+      .first();
+    if (await preferredWorkSelect.isVisible().catch(() => false)) {
+      await preferredWorkSelect.selectOption("remote");
     }
 
     // Submit application
     await page.getByRole("button", { name: /Submit Application|Submit/i }).click();
 
-    // Step 5: Verify submission success
-    await waitForPageLoad(page, /apply\/.*\/done|portal/);
+    // Step 5: Verify redirect to /portal/my-applications
+    await waitForPageLoad(page, /portal\/my-applications/);
 
-    // Check for success message or redirect to portal
-    const successMessage = page.getByText(
-      /Application submitted|Thank you|Success|Your application/i
+    // Check for success banner or My Applications heading
+    const successBanner = page.getByText(
+      /Application Submitted|Already Applied/i
     );
-    const portalHeading = page.getByRole("heading", { name: /Candidate Portal|My Applications/i });
+    const myApplicationsHeading = page.getByRole("heading", {
+      name: /My Applications/i,
+    });
 
-    await expect(successMessage.or(portalHeading)).toBeVisible();
+    await expect(successBanner.or(myApplicationsHeading)).toBeVisible();
 
-    // Verify application appears in portal (if signed in)
-    if (process.env.E2E_CANDIDATE_EMAIL) {
-      await page.goto("/portal/applications");
-      await waitForPageLoad(page, "/portal/applications");
-
-      await expect(
-        page.getByText(candidateName).or(page.getByText(uniqueEmail))
-      ).toBeVisible();
-    }
+    // Verify the application is listed (cookie should be set automatically)
+    await expect(
+      page.getByText(candidateName).or(page.getByText(uniqueEmail))
+    ).toBeVisible();
   });
 
   /**
    * Test: Recruiter can update application stage and notes
    * Verifies that recruiters can manage candidate applications
    */
-  test("Recruiter can update stage + notes in application detail", async ({ page }) => {
+  test("Recruiter can update stage + notes in application detail", async ({
+    page,
+  }) => {
     // Step 1: Navigate to applications list
     await page.goto("/dashboard/applications");
     await waitForPageLoad(page, "/dashboard/applications");
@@ -179,9 +207,7 @@ test.describe("Smoke Tests", () => {
     await page.waitForTimeout(2000);
 
     // Verify stage badge updated
-    await expect(
-      page.locator("text=" + newStage).first()
-    ).toBeVisible();
+    await expect(page.locator("text=" + newStage).first()).toBeVisible();
 
     // Step 5: Update notes
     const uniqueNote = `E2E test note ${Date.now()}: Candidate looks promising`;
@@ -201,13 +227,11 @@ test.describe("Smoke Tests", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify stage persisted
-    await expect(
-      page.locator("text=" + newStage).first()
-    ).toBeVisible();
+    await expect(page.locator("text=" + newStage).first()).toBeVisible();
 
     // Verify notes persisted
-    await expect(
-      page.locator('textarea[name="notes"]')
-    ).toHaveValue(uniqueNote);
+    await expect(page.locator('textarea[name="notes"]')).toHaveValue(
+      uniqueNote
+    );
   });
 });
