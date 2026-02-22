@@ -354,24 +354,7 @@ export default async function ApplicationDetailPage({
       {/* Notes */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Notes</h2>
-        <form action={updateNotes}>
-          <input type="hidden" name="id" value={application.id} />
-          <textarea
-            name="notes"
-            defaultValue={application.notes || ""}
-            rows={4}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Add notes about this candidate..."
-          />
-          <div className="mt-3">
-            <button
-              type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium"
-            >
-              Save Notes
-            </button>
-          </div>
-        </form>
+        <NotesForm applicationId={application.id} initialNotes={application.notes} />
       </div>
 
       {/* Timeline */}
