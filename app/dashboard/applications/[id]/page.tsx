@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getTenantIdFromActiveOrg } from "@/lib/tenant";
 import { ApplicationStage } from "@prisma/client";
+import NotesForm from "./NotesForm";
 
 interface ApplicationDetailPageProps {
   params: Promise<{ id: string }>;
