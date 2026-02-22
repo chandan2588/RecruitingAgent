@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
-import { OrganizationSwitcher, UserButton, auth } from "@clerk/nextjs";
+import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 
 export default async function DashboardLayout({
