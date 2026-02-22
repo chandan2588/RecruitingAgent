@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 
@@ -27,32 +28,20 @@ async function getTenantForOrg(clerkOrgId: string | null) {
 export default async function DashboardHomePage() {
   const session = await auth();
   
-  // This shouldn't happen due to middleware, but handle it
-  if (!session.userId) {
-    return (
-      <div className="p-8 text-center">
-        <p>Please sign in to access the dashboard.</p>
-        <Link href="/sign-in" className="text-blue-600">Sign In</Link>
-      </div>
-    );
+  const orgId = session.orgId;
+  
+  // If no active org, redirect to select org page
+  if (!orgId) {
+    redirect("/select-org");
   }
 
-  if (!session.orgId) {
-    return (
-      <div className="p-8 text-center">
-        <p>Please select an organization.</p>
-        <Link href="/select-org" className="text-blue-600">Select Organization</Link>
-      </div>
-    );
-  }
-
-  const tenant = await getTenantForOrg(session.orgId);
+  const tenant = await getTenantForOrg(orgId);
 
   if (!tenant) {
     return (
       <div className="p-8 text-center">
-        <p>Error loading organization. Please try again.</p>
-        <Link href="/select-org" className="text-blue-600">Go Back</Link>
+        <p className="text-red-600">Error loading organization. Please try again.</p>
+        <Link href="/select-org" className="text-blue-600 mt-4 inline-block">Go Back</Link>
       </div>
     );
   }

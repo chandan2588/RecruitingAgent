@@ -1,5 +1,6 @@
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
+export const dynamic = "force-dynamic";
+
+import { OrganizationSwitcher, UserButton, auth } from "@clerk/nextjs";
 import Link from "next/link";
 
 export default async function DashboardLayout({
@@ -7,6 +8,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // This will throw if not authenticated, but middleware should have already protected
   const session = await auth();
   const orgId = session.orgId;
 
@@ -44,12 +46,6 @@ export default async function DashboardLayout({
                     className="text-gray-600 hover:text-gray-900 font-medium"
                   >
                     Applications
-                  </Link>
-                  <Link
-                    href="/dashboard/team"
-                    className="text-gray-600 hover:text-gray-900 font-medium"
-                  >
-                    Team
                   </Link>
                 </nav>
               )}
@@ -102,12 +98,6 @@ export default async function DashboardLayout({
                 className="text-sm text-gray-600 hover:text-gray-900 font-medium"
               >
                 Applications
-              </Link>
-              <Link
-                href="/dashboard/team"
-                className="text-sm text-gray-600 hover:text-gray-900 font-medium"
-              >
-                Team
               </Link>
             </div>
           </div>
