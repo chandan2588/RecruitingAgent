@@ -58,6 +58,7 @@ model Job {
 model Candidate {
   id           String        @id @default(cuid())
   tenantId     String
+  clerkUserId  String?       @unique
   email        String?
   phone        String?
   fullName     String?
@@ -71,6 +72,7 @@ model Candidate {
   @@unique([tenantId, phone])
   @@index([tenantId])
   @@index([tenantId, createdAt])
+  @@index([clerkUserId])
 }
 
 model Application {

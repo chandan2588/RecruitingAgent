@@ -1,14 +1,15 @@
-'use server'
+"use server";
 
-import { prisma } from '@/lib/prisma'
-import { screeningQuestions, calculateScreeningScore } from '@/lib/questions'
-import { redirect } from 'next/navigation'
+import { prisma } from "@/lib/prisma";
+import { screeningQuestions, calculateScreeningScore } from "@/lib/questions";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
 export interface CandidateInput {
-  fullName: string
-  email: string
-  phone?: string
-  location?: string
+  fullName: string;
+  email: string;
+  phone?: string;
+  location?: string;
 }
 
 export async function getJobForApply(jobId: string) {
@@ -22,8 +23,8 @@ export async function getJobForApply(jobId: string) {
         select: { name: true },
       },
     },
-  })
-  return job
+  });
+  return job;
 }
 
 export async function submitApplication(
@@ -31,27 +32,31 @@ export async function submitApplication(
   candidateInput: CandidateInput,
   answers: Record<string, string>
 ) {
+  // Get current user if signed in
+  const session = await auth();
+  const clerkUserId = session.userId;
+
   // Get job to find tenant
   const job = await prisma.job.findUnique({
     where: { id: jobId },
-  })
+  });
 
   if (!job) {
-    throw new Error('Job not found')
+    throw new Error("Job not found");
   }
 
-  const tenantId = job.tenantId
+  const tenantId = job.tenantId;
 
   // Validate: at least email or phone required
-  const email = candidateInput.email?.trim() || null
-  const phone = candidateInput.phone?.trim() || null
+  const email = candidateInput.email?.trim() || null;
+  const phone = candidateInput.phone?.trim() || null;
 
   if (!email && !phone) {
-    throw new Error('Either email or phone is required')
+    throw new Error("Either email or phone is required");
   }
 
   // Upsert candidate by (tenantId, email) or (tenantId, phone)
-  let candidate
+  let candidate;
 
   // Try to find existing candidate
   if (email) {
@@ -62,7 +67,7 @@ export async function submitApplication(
           email,
         },
       },
-    })
+    });
   }
 
   if (!candidate && phone) {
@@ -73,7 +78,7 @@ export async function submitApplication(
           phone,
         },
       },
-    })
+    });
   }
 
   if (candidate) {
@@ -85,8 +90,10 @@ export async function submitApplication(
         email: email || candidate.email,
         phone: phone || candidate.phone,
         location: candidateInput.location || candidate.location,
+        // Only set clerkUserId if not already set and user is signed in
+        ...(clerkUserId && !candidate.clerkUserId ? { clerkUserId } : {}),
       },
-    })
+    });
   } else {
     // Create new candidate
     candidate = await prisma.candidate.create({
@@ -96,8 +103,9 @@ export async function submitApplication(
         phone,
         location: candidateInput.location || null,
         tenantId,
+        clerkUserId,
       },
-    })
+    });
   }
 
   // Check if already applied - redirect instead of throwing error
@@ -106,15 +114,15 @@ export async function submitApplication(
       jobId,
       candidateId: candidate.id,
     },
-  })
+  });
 
   if (existingApplication) {
     // Redirect to done page with already_applied status
-    redirect(`/apply/${jobId}/done?status=already_applied`)
+    redirect(`/apply/${jobId}/done?status=already_applied`);
   }
 
   // Calculate screening score
-  const score = calculateScreeningScore(answers)
+  const score = calculateScreeningScore(answers);
 
   // Create application
   const application = await prisma.application.create({
@@ -122,29 +130,29 @@ export async function submitApplication(
       tenantId,
       jobId,
       candidateId: candidate.id,
-      stage: 'NEW',
+      stage: "NEW",
       score,
     },
-  })
+  });
 
   // Store answers
   const answerData = screeningQuestions
-    .filter(q => answers[q.key])
-    .map(q => ({
+    .filter((q) => answers[q.key])
+    .map((q) => ({
       applicationId: application.id,
       questionKey: q.key,
       answerText: answers[q.key],
-    }))
+    }));
 
   if (answerData.length > 0) {
     await prisma.answer.createMany({
       data: answerData,
-    })
+    });
   }
 
-  return { applicationId: application.id, score }
+  return { applicationId: application.id, score };
 }
 
 export async function redirectToDone(jobId: string) {
-  redirect(`/apply/${jobId}/done`)
+  redirect(`/apply/${jobId}/done`);
 }
