@@ -1,17 +1,68 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { getTenantIdFromActiveOrg } from "@/lib/tenant";
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/prisma";
+
+async function getTenantForOrg(clerkOrgId: string | null) {
+  if (!clerkOrgId) return null;
+  
+  let tenant = await prisma.tenant.findUnique({
+    where: { clerkOrgId },
+  });
+
+  if (!tenant) {
+    // Create tenant for this org
+    tenant = await prisma.tenant.create({
+      data: {
+        clerkOrgId,
+        name: "My Organization",
+      },
+    });
+  }
+
+  return tenant;
+}
 
 export default async function DashboardHomePage() {
-  const { tenantName } = await getTenantIdFromActiveOrg();
+  const session = await auth();
+  
+  // This shouldn't happen due to middleware, but handle it
+  if (!session.userId) {
+    return (
+      <div className="p-8 text-center">
+        <p>Please sign in to access the dashboard.</p>
+        <Link href="/sign-in" className="text-blue-600">Sign In</Link>
+      </div>
+    );
+  }
+
+  if (!session.orgId) {
+    return (
+      <div className="p-8 text-center">
+        <p>Please select an organization.</p>
+        <Link href="/select-org" className="text-blue-600">Select Organization</Link>
+      </div>
+    );
+  }
+
+  const tenant = await getTenantForOrg(session.orgId);
+
+  if (!tenant) {
+    return (
+      <div className="p-8 text-center">
+        <p>Error loading organization. Please try again.</p>
+        <Link href="/select-org" className="text-blue-600">Go Back</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-6xl mx-auto bg-white min-h-screen">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-2">
-          Organization: <span className="font-medium text-gray-900">{tenantName}</span>
+          Organization: <span className="font-medium text-gray-900">{tenant.name}</span>
         </p>
       </div>
 

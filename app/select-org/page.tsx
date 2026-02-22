@@ -5,11 +5,12 @@ import Link from "next/link";
 export default async function SelectOrgPage() {
   const session = await auth();
 
+  // Not signed in - redirect to sign in
   if (!session.userId) {
     redirect("/sign-in");
   }
 
-  // If user already has an active org, redirect to dashboard
+  // Has active org - redirect to dashboard
   if (session.orgId) {
     redirect("/dashboard");
   }
@@ -20,23 +21,23 @@ export default async function SelectOrgPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Select Organization</h1>
           <p className="mt-2 text-gray-600">
-            You need to select an organization to access the dashboard.
+            You need to select or create an organization to access the dashboard.
           </p>
         </div>
 
         <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6">
           <p className="text-gray-700 mb-4">
-            Please use the organization switcher in the header, or contact your administrator to be added to an organization.
+            You are signed in but not part of any organization yet.
           </p>
           
           <div className="space-y-3">
             <a
-              href="https://dashboard.clerk.com"
+              href="https://dashboard.clerk.com/last-active?path=organizations"
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 font-medium"
             >
-              Manage Organizations in Clerk
+              Create Organization in Clerk
             </a>
             
             <Link
@@ -48,12 +49,17 @@ export default async function SelectOrgPage() {
           </div>
         </div>
 
-        <Link
-          href="/"
-          className="text-blue-600 hover:text-blue-800 font-medium"
-        >
-          ← Back to Home
-        </Link>
+        <div className="text-sm text-gray-500">
+          <p className="mb-2">
+            After creating an organization in Clerk, click "Try Again" to access your dashboard.
+          </p>
+          <Link
+            href="/"
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            ← Back to Home
+          </Link>
+        </div>
       </div>
     </div>
   );
