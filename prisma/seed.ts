@@ -28,13 +28,13 @@ async function main() {
 
   console.log("Created user:", user.name);
 
-  // Create sample jobs
+  // Create sample jobs with simple IDs
   const jobs = await Promise.all([
     prisma.job.upsert({
-      where: { id: tenant.id + ":job1" },
+      where: { id: "seed-job-001" },
       update: {},
       create: {
-        id: tenant.id + ":job1",
+        id: "seed-job-001",
         tenantId: tenant.id,
         createdById: user.id,
         title: "Senior Software Engineer",
@@ -44,10 +44,10 @@ async function main() {
       },
     }),
     prisma.job.upsert({
-      where: { id: tenant.id + ":job2" },
+      where: { id: "seed-job-002" },
       update: {},
       create: {
-        id: tenant.id + ":job2",
+        id: "seed-job-002",
         tenantId: tenant.id,
         createdById: user.id,
         title: "Product Manager",
@@ -57,10 +57,10 @@ async function main() {
       },
     }),
     prisma.job.upsert({
-      where: { id: tenant.id + ":job3" },
+      where: { id: "seed-job-003" },
       update: {},
       create: {
-        id: tenant.id + ":job3",
+        id: "seed-job-003",
         tenantId: tenant.id,
         createdById: user.id,
         title: "UX Designer",
@@ -73,13 +73,13 @@ async function main() {
 
   console.log(`Created ${jobs.length} jobs`);
 
-  // Create sample candidates
+  // Create sample candidates with simple IDs
   const candidates = await Promise.all([
     prisma.candidate.upsert({
-      where: { id: tenant.id + ":cand1" },
+      where: { id: "seed-cand-001" },
       update: {},
       create: {
-        id: tenant.id + ":cand1",
+        id: "seed-cand-001",
         tenantId: tenant.id,
         fullName: "John Smith",
         email: "john.smith@example.com",
@@ -88,10 +88,10 @@ async function main() {
       },
     }),
     prisma.candidate.upsert({
-      where: { id: tenant.id + ":cand2" },
+      where: { id: "seed-cand-002" },
       update: {},
       create: {
-        id: tenant.id + ":cand2",
+        id: "seed-cand-002",
         tenantId: tenant.id,
         fullName: "Sarah Johnson",
         email: "sarah.j@example.com",
@@ -100,10 +100,10 @@ async function main() {
       },
     }),
     prisma.candidate.upsert({
-      where: { id: tenant.id + ":cand3" },
+      where: { id: "seed-cand-003" },
       update: {},
       create: {
-        id: tenant.id + ":cand3",
+        id: "seed-cand-003",
         tenantId: tenant.id,
         fullName: "Michael Chen",
         email: "mchen@example.com",
@@ -112,10 +112,10 @@ async function main() {
       },
     }),
     prisma.candidate.upsert({
-      where: { id: tenant.id + ":cand4" },
+      where: { id: "seed-cand-004" },
       update: {},
       create: {
-        id: tenant.id + ":cand4",
+        id: "seed-cand-004",
         tenantId: tenant.id,
         fullName: "Emily Davis",
         email: "emily.davis@example.com",
@@ -124,10 +124,10 @@ async function main() {
       },
     }),
     prisma.candidate.upsert({
-      where: { id: tenant.id + ":cand5" },
+      where: { id: "seed-cand-005" },
       update: {},
       create: {
-        id: tenant.id + ":cand5",
+        id: "seed-cand-005",
         tenantId: tenant.id,
         fullName: "David Wilson",
         email: "dwilson@example.com",
@@ -139,13 +139,13 @@ async function main() {
 
   console.log(`Created ${candidates.length} candidates`);
 
-  // Create sample applications with different stages and scores
+  // Create sample applications with simple IDs
   const applications = await Promise.all([
     prisma.application.upsert({
-      where: { id: tenant.id + ":app1" },
+      where: { id: "seed-app-001" },
       update: {},
       create: {
-        id: tenant.id + ":app1",
+        id: "seed-app-001",
         tenantId: tenant.id,
         jobId: jobs[0].id,
         candidateId: candidates[0].id,
@@ -155,10 +155,10 @@ async function main() {
       },
     }),
     prisma.application.upsert({
-      where: { id: tenant.id + ":app2" },
+      where: { id: "seed-app-002" },
       update: {},
       create: {
-        id: tenant.id + ":app2",
+        id: "seed-app-002",
         tenantId: tenant.id,
         jobId: jobs[0].id,
         candidateId: candidates[1].id,
@@ -168,10 +168,10 @@ async function main() {
       },
     }),
     prisma.application.upsert({
-      where: { id: tenant.id + ":app3" },
+      where: { id: "seed-app-003" },
       update: {},
       create: {
-        id: tenant.id + ":app3",
+        id: "seed-app-003",
         tenantId: tenant.id,
         jobId: jobs[1].id,
         candidateId: candidates[2].id,
@@ -180,10 +180,10 @@ async function main() {
       },
     }),
     prisma.application.upsert({
-      where: { id: tenant.id + ":app4" },
+      where: { id: "seed-app-004" },
       update: {},
       create: {
-        id: tenant.id + ":app4",
+        id: "seed-app-004",
         tenantId: tenant.id,
         jobId: jobs[1].id,
         candidateId: candidates[3].id,
@@ -192,10 +192,10 @@ async function main() {
       },
     }),
     prisma.application.upsert({
-      where: { id: tenant.id + ":app5" },
+      where: { id: "seed-app-005" },
       update: {},
       create: {
-        id: tenant.id + ":app5",
+        id: "seed-app-005",
         tenantId: tenant.id,
         jobId: jobs[2].id,
         candidateId: candidates[4].id,
@@ -204,10 +204,10 @@ async function main() {
       },
     }),
     prisma.application.upsert({
-      where: { id: tenant.id + ":app6" },
+      where: { id: "seed-app-006" },
       update: {},
       create: {
-        id: tenant.id + ":app6",
+        id: "seed-app-006",
         tenantId: tenant.id,
         jobId: jobs[0].id,
         candidateId: candidates[3].id,
