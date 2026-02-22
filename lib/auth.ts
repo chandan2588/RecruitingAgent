@@ -32,7 +32,7 @@ export async function getCurrentUserAndTenant(): Promise<UserAndTenant> {
       user: {
         id: existingUser.id,
         tenantId: existingUser.tenantId,
-        clerkUserId: existingUser.clerkUserId,
+        clerkUserId: existingUser.clerkUserId || '',
         email: existingUser.email,
         name: existingUser.name,
       },
@@ -84,7 +84,7 @@ export async function getCurrentUserAndTenant(): Promise<UserAndTenant> {
     user: {
       id: result.user.id,
       tenantId: result.user.tenantId,
-      clerkUserId: result.user.clerkUserId,
+      clerkUserId: result.user.clerkUserId || '',
       email: result.user.email,
       name: result.user.name,
     },
