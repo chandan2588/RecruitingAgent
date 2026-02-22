@@ -53,20 +53,20 @@ export function StartFormClient({ jobId, jobTitle }: StartFormClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-xl mx-auto px-4 py-8 md:py-12">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-xl mx-auto px-4">
         <div className="mb-6">
           <Link
             href={`/apply/${jobId}`}
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
           >
             ← Back to job
           </Link>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border p-6 md:p-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:p-8">
           <div className="mb-6">
-            <span className="text-sm text-gray-500">Step 1 of 2</span>
+            <span className="text-sm text-gray-600 font-medium">Step 1 of 2</span>
             <h1 className="text-xl md:text-2xl font-bold text-gray-900 mt-1">
               Apply for {jobTitle}
             </h1>
@@ -79,7 +79,7 @@ export function StartFormClient({ jobId, jobTitle }: StartFormClientProps) {
             <div>
               <label
                 htmlFor="fullName"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-900 mb-1"
               >
                 Full Name <span className="text-red-500">*</span>
               </label>
@@ -88,7 +88,7 @@ export function StartFormClient({ jobId, jobTitle }: StartFormClientProps) {
                 id="fullName"
                 name="fullName"
                 required
-                className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="John Doe"
               />
               {errors.fullName && (
@@ -99,7 +99,7 @@ export function StartFormClient({ jobId, jobTitle }: StartFormClientProps) {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-900 mb-1"
               >
                 Email
               </label>
@@ -107,7 +107,7 @@ export function StartFormClient({ jobId, jobTitle }: StartFormClientProps) {
                 type="email"
                 id="email"
                 name="email"
-                className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="john@example.com"
               />
               {errors.email && (
@@ -118,7 +118,7 @@ export function StartFormClient({ jobId, jobTitle }: StartFormClientProps) {
             <div>
               <label
                 htmlFor="phone"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-900 mb-1"
               >
                 Phone Number
               </label>
@@ -126,7 +126,7 @@ export function StartFormClient({ jobId, jobTitle }: StartFormClientProps) {
                 type="tel"
                 id="phone"
                 name="phone"
-                className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="+1 555 123 4567"
               />
               {errors.phone && (
@@ -137,7 +137,7 @@ export function StartFormClient({ jobId, jobTitle }: StartFormClientProps) {
             <div>
               <label
                 htmlFor="location"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-gray-900 mb-1"
               >
                 Location
               </label>
@@ -145,7 +145,7 @@ export function StartFormClient({ jobId, jobTitle }: StartFormClientProps) {
                 type="text"
                 id="location"
                 name="location"
-                className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="San Francisco, CA"
               />
             </div>

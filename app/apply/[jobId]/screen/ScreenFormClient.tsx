@@ -85,20 +85,20 @@ export function ScreenFormClient({ jobId, jobTitle, questions }: ScreenFormClien
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-xl mx-auto px-4 py-8 md:py-12">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-xl mx-auto px-4">
         <div className="mb-6">
           <Link
             href={`/apply/${jobId}/start`}
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
           >
             ← Back
           </Link>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border p-6 md:p-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:p-8">
           <div className="mb-6">
-            <span className="text-sm text-gray-500">Step 2 of 2</span>
+            <span className="text-sm text-gray-600 font-medium">Step 2 of 2</span>
             <h1 className="text-xl md:text-2xl font-bold text-gray-900 mt-1">
               Screening Questions
             </h1>
@@ -118,7 +118,7 @@ export function ScreenFormClient({ jobId, jobTitle, questions }: ScreenFormClien
               <div key={question.key}>
                 <label
                   htmlFor={question.key}
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-medium text-gray-900 mb-2"
                 >
                   {question.label}
                   {question.required && <span className="text-red-500 ml-1">*</span>}
@@ -130,7 +130,7 @@ export function ScreenFormClient({ jobId, jobTitle, questions }: ScreenFormClien
                     name={question.key}
                     rows={question.rows || 4}
                     required={question.required}
-                    className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder={question.placeholder}
                   />
                 )}
@@ -141,7 +141,7 @@ export function ScreenFormClient({ jobId, jobTitle, questions }: ScreenFormClien
                     id={question.key}
                     name={question.key}
                     required={question.required}
-                    className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder={question.placeholder}
                   />
                 )}
@@ -154,7 +154,7 @@ export function ScreenFormClient({ jobId, jobTitle, questions }: ScreenFormClien
                     min={0}
                     max={50}
                     required={question.required}
-                    className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder={question.placeholder}
                   />
                 )}
@@ -164,7 +164,7 @@ export function ScreenFormClient({ jobId, jobTitle, questions }: ScreenFormClien
                     id={question.key}
                     name={question.key}
                     required={question.required}
-                    className="w-full border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select an option</option>
                     {question.options.map((opt) => (

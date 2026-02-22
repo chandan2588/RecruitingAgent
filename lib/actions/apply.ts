@@ -100,7 +100,7 @@ export async function submitApplication(
     })
   }
 
-  // Check if already applied
+  // Check if already applied - redirect instead of throwing error
   const existingApplication = await prisma.application.findFirst({
     where: {
       jobId,
@@ -109,7 +109,8 @@ export async function submitApplication(
   })
 
   if (existingApplication) {
-    throw new Error('You have already applied for this job')
+    // Redirect to done page with already_applied status
+    redirect(`/apply/${jobId}/done?status=already_applied`)
   }
 
   // Calculate screening score
