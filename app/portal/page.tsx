@@ -60,7 +60,7 @@ export default async function PortalHomePage() {
         </Link>
 
         <Link
-          href="/portal/applications"
+          href="/portal/my-applications"
           className="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-blue-300 transition-all"
         >
           <div className="flex items-center gap-4">

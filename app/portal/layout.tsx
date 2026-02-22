@@ -43,7 +43,7 @@ export default async function PortalLayout({
                   Open Positions
                 </Link>
                 <Link
-                  href="/portal/applications"
+                  href="/portal/my-applications"
                   className="text-gray-600 hover:text-gray-900 font-medium"
                 >
                   My Applications
@@ -81,7 +81,7 @@ export default async function PortalLayout({
               Jobs
             </Link>
             <Link
-              href="/portal/applications"
+              href="/portal/my-applications"
               className="text-sm text-gray-600 hover:text-gray-900 font-medium"
             >
               My Applications

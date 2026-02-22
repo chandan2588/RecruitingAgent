@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getTenantIdFromActiveOrg } from "@/lib/tenant";
 import { ApplicationStage } from "@prisma/client";
+import { screeningQuestions } from "@/lib/questions";
 import NotesForm from "./NotesForm";
 
 interface ApplicationDetailPageProps {
@@ -335,19 +336,28 @@ export default async function ApplicationDetailPage({
           <p className="text-gray-600">No answers submitted.</p>
         ) : (
           <div className="space-y-4">
-            {application.answers.map((answer) => (
-              <div
-                key={answer.id}
-                className="border-b border-gray-100 pb-4 last:border-0"
-              >
-                <h3 className="text-sm font-medium text-gray-900 mb-1 capitalize">
-                  {answer.questionKey.replace(/_/g, " ")}
-                </h3>
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {answer.answerText || "No answer"}
-                </p>
-              </div>
-            ))}
+            {application.answers.map((answer) => {
+              // Find the question label from screeningQuestions
+              const questionDef = screeningQuestions.find(
+                (q) => q.key === answer.questionKey
+              );
+              const questionLabel = questionDef?.label ?? 
+                answer.questionKey.replace(/_/g, " ");
+
+              return (
+                <div
+                  key={answer.id}
+                  className="border-b border-gray-100 pb-4 last:border-0"
+                >
+                  <h3 className="text-sm font-medium text-gray-900 mb-1">
+                    {questionLabel}
+                  </h3>
+                  <p className="text-gray-700 whitespace-pre-wrap">
+                    {answer.answerText || "No answer"}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { submitApplication, redirectToDone, type CandidateInput } from '@/lib/actions/apply'
+import { submitApplication, type CandidateInput } from '@/lib/actions/apply'
 import type { Question } from '@/lib/questions'
 
 interface ScreenFormClientProps {
@@ -64,10 +64,9 @@ export function ScreenFormClient({ jobId, jobTitle, questions }: ScreenFormClien
 
     try {
       await submitApplication(jobId, candidateData, answers)
-      // Clear session storage
+      // Clear session storage - redirect is handled by submitApplication
       sessionStorage.removeItem(`apply-${jobId}-candidate`)
-      // Redirect to done page
-      await redirectToDone(jobId)
+      // Note: submitApplication handles the redirect to /portal/my-applications
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
       setIsSubmitting(false)
