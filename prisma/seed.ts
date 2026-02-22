@@ -1,182 +1,257 @@
-import { PrismaClient } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import { Pool } from 'pg'
-import { ApplicationStage } from '@prisma/client'
-
-// Use the DATABASE_URL from env (Neon or local)
-let connectionString = process.env.DATABASE_URL || ''
-if (connectionString.startsWith('prisma+postgres://')) {
-  connectionString = 'postgres://postgres:postgres@localhost:51214/template1?sslmode=disable'
-}
-
-const pool = new Pool({ connectionString })
-const adapter = new PrismaPg(pool)
-const prisma = new PrismaClient({ adapter })
+import { prisma } from "@/lib/prisma";
+import { ApplicationStage } from "@prisma/client";
 
 async function main() {
-  console.log('Start seeding...')
+  // Find the first tenant
+  const tenant = await prisma.tenant.findFirst();
+  
+  if (!tenant) {
+    console.log("No tenant found. Please create a tenant first.");
+    return;
+  }
 
-  // Create 1 Tenant
-  const tenant = await prisma.tenant.create({
-    data: {
-      name: 'Acme Corporation',
-    },
-  })
-  console.log(`Created tenant: ${tenant.name} (${tenant.id})`)
+  console.log(`Seeding data for tenant: ${tenant.name} (${tenant.id})`);
 
-  // Create 1 User
-  const user = await prisma.user.create({
-    data: {
-      clerkUserId: 'seed_user_001',
-      email: 'recruiter@acme.com',
-      name: 'Jane Recruiter',
+  // Create sample users
+  const user = await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: "admin@example.com" } },
+    update: {},
+    create: {
       tenantId: tenant.id,
+      email: "admin@example.com",
+      name: "Admin User",
     },
-  })
-  console.log(`Created user: ${user.name} (${user.email})`)
+  });
 
-  // Create 3 Jobs
+  console.log("Created user:", user.name);
+
+  // Create sample jobs
   const jobs = await Promise.all([
-    prisma.job.create({
-      data: {
-        title: 'Senior Frontend Engineer',
-        description: 'Looking for an experienced React developer with TypeScript expertise.',
+    prisma.job.upsert({
+      where: { id: "job1" },
+      update: {},
+      create: {
+        id: "job1",
         tenantId: tenant.id,
         createdById: user.id,
+        title: "Senior Software Engineer",
+        description: "We are looking for a senior software engineer with 5+ years of experience in React and Node.js.",
+        location: "San Francisco, CA",
+        isRemote: true,
       },
     }),
-    prisma.job.create({
-      data: {
-        title: 'Backend Developer (Node.js)',
-        description: 'Build scalable APIs and services using Node.js and PostgreSQL.',
+    prisma.job.upsert({
+      where: { id: "job2" },
+      update: {},
+      create: {
+        id: "job2",
         tenantId: tenant.id,
         createdById: user.id,
+        title: "Product Manager",
+        description: "Seeking an experienced product manager to lead our product team.",
+        location: "New York, NY",
+        isRemote: false,
       },
     }),
-    prisma.job.create({
-      data: {
-        title: 'Full Stack Engineer',
-        description: 'Work across the entire stack - React frontend and Node.js backend.',
+    prisma.job.upsert({
+      where: { id: "job3" },
+      update: {},
+      create: {
+        id: "job3",
         tenantId: tenant.id,
         createdById: user.id,
+        title: "UX Designer",
+        description: "Join our design team to create beautiful user experiences.",
+        location: "Remote",
+        isRemote: true,
       },
     }),
-  ])
-  console.log(`Created ${jobs.length} jobs`)
+  ]);
 
-  // Create 5 Candidates
-  const candidatesData = [
-    { fullName: 'Alice Johnson', email: 'alice@example.com', phone: '+1-555-0101' },
-    { fullName: 'Bob Smith', email: 'bob@example.com', phone: '+1-555-0102' },
-    { fullName: 'Carol Davis', email: 'carol@example.com', phone: '+1-555-0103' },
-    { fullName: 'David Wilson', email: 'david@example.com', phone: '+1-555-0104' },
-    { fullName: 'Eve Brown', email: 'eve@example.com', phone: '+1-555-0105' },
-  ]
+  console.log(`Created ${jobs.length} jobs`);
 
-  const candidates: { id: string; fullName: string | null; email: string | null }[] = []
-  for (const data of candidatesData) {
-    const candidate = await prisma.candidate.create({
-      data: {
-        ...data,
+  // Create sample candidates
+  const candidates = await Promise.all([
+    prisma.candidate.upsert({
+      where: { id: "cand1" },
+      update: {},
+      create: {
+        id: "cand1",
         tenantId: tenant.id,
+        fullName: "John Smith",
+        email: "john.smith@example.com",
+        phone: "+1-555-0001",
+        location: "San Francisco, CA",
       },
-    })
-    candidates.push(candidate)
-    console.log(`Created candidate: ${candidate.fullName} (${candidate.email})`)
-  }
+    }),
+    prisma.candidate.upsert({
+      where: { id: "cand2" },
+      update: {},
+      create: {
+        id: "cand2",
+        tenantId: tenant.id,
+        fullName: "Sarah Johnson",
+        email: "sarah.j@example.com",
+        phone: "+1-555-0002",
+        location: "New York, NY",
+      },
+    }),
+    prisma.candidate.upsert({
+      where: { id: "cand3" },
+      update: {},
+      create: {
+        id: "cand3",
+        tenantId: tenant.id,
+        fullName: "Michael Chen",
+        email: "mchen@example.com",
+        phone: "+1-555-0003",
+        location: "Seattle, WA",
+      },
+    }),
+    prisma.candidate.upsert({
+      where: { id: "cand4" },
+      update: {},
+      create: {
+        id: "cand4",
+        tenantId: tenant.id,
+        fullName: "Emily Davis",
+        email: "emily.davis@example.com",
+        phone: "+1-555-0004",
+        location: "Austin, TX",
+      },
+    }),
+    prisma.candidate.upsert({
+      where: { id: "cand5" },
+      update: {},
+      create: {
+        id: "cand5",
+        tenantId: tenant.id,
+        fullName: "David Wilson",
+        email: "dwilson@example.com",
+        phone: "+1-555-0005",
+        location: "Chicago, IL",
+      },
+    }),
+  ]);
 
-  // Create Applications for each candidate
-  const stages = [
-    ApplicationStage.NEW,
-    ApplicationStage.SCREENED,
-    ApplicationStage.SHORTLISTED,
-    ApplicationStage.SCHEDULED,
-    ApplicationStage.INTERVIEWED,
-  ]
+  console.log(`Created ${candidates.length} candidates`);
 
-  const applications: { id: string; candidateId: string; jobId: string }[] = []
-  for (let i = 0; i < candidates.length; i++) {
-    const candidate = candidates[i]
-    // Each candidate applies to 1-2 random jobs
-    const numApplications = Math.floor(Math.random() * 2) + 1
-    const shuffledJobs = [...jobs].sort(() => Math.random() - 0.5)
-    
-    for (let j = 0; j < numApplications; j++) {
-      const job = shuffledJobs[j]
-      const stage = stages[i]
-      const score = stage !== ApplicationStage.NEW 
-        ? Math.floor(Math.random() * 40) + 60 // Score between 60-99
-        : 0
-
-      const application = await prisma.application.create({
-        data: {
-          candidateId: candidate.id,
-          jobId: job.id,
-          tenantId: tenant.id,
-          stage,
-          score,
-        },
-      })
-      applications.push(application)
-      console.log(`Created application: ${candidate.fullName} -> ${job.title} (${stage})`)
-
-      // Add some answers for screened+ applications
-      if (stage !== ApplicationStage.NEW) {
-        await prisma.answer.createMany({
-          data: [
-            {
-              applicationId: application.id,
-              questionKey: 'experience',
-              answerText: `I have ${Math.floor(Math.random() * 8) + 2} years of experience working with modern web technologies.`,
-            },
-            {
-              applicationId: application.id,
-              questionKey: 'motivation',
-              answerText: 'I am excited about the opportunity to contribute to a growing team and work on challenging problems.',
-            },
-          ],
-        })
-        console.log(`  -> Added 2 answers`)
-      }
-    }
-  }
-
-  // Create some InterviewSlots
-  const now = new Date()
-  await Promise.all([
-    prisma.interviewSlot.create({
-      data: {
+  // Create sample applications with different stages and scores
+  const applications = await Promise.all([
+    prisma.application.upsert({
+      where: { id: "app1" },
+      update: {},
+      create: {
+        id: "app1",
+        tenantId: tenant.id,
         jobId: jobs[0].id,
-        startsAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), // Tomorrow
-        endsAt: new Date(now.getTime() + 25 * 60 * 60 * 1000),
+        candidateId: candidates[0].id,
+        stage: ApplicationStage.HIRED,
+        score: 95,
+        notes: "Excellent candidate, strong technical skills and great culture fit.",
       },
     }),
-    prisma.interviewSlot.create({
-      data: {
+    prisma.application.upsert({
+      where: { id: "app2" },
+      update: {},
+      create: {
+        id: "app2",
+        tenantId: tenant.id,
         jobId: jobs[0].id,
-        startsAt: new Date(now.getTime() + 48 * 60 * 60 * 1000), // Day after tomorrow
-        endsAt: new Date(now.getTime() + 49 * 60 * 60 * 1000),
-        isBooked: true,
+        candidateId: candidates[1].id,
+        stage: ApplicationStage.INTERVIEWED,
+        score: 82,
+        notes: "Good technical skills, needs improvement in system design.",
       },
     }),
-    prisma.interviewSlot.create({
-      data: {
+    prisma.application.upsert({
+      where: { id: "app3" },
+      update: {},
+      create: {
+        id: "app3",
+        tenantId: tenant.id,
         jobId: jobs[1].id,
-        startsAt: new Date(now.getTime() + 72 * 60 * 60 * 1000),
-        endsAt: new Date(now.getTime() + 73 * 60 * 60 * 1000),
+        candidateId: candidates[2].id,
+        stage: ApplicationStage.SHORTLISTED,
+        score: 78,
       },
     }),
-  ])
-  console.log(`Created 3 interview slots`)
+    prisma.application.upsert({
+      where: { id: "app4" },
+      update: {},
+      create: {
+        id: "app4",
+        tenantId: tenant.id,
+        jobId: jobs[1].id,
+        candidateId: candidates[3].id,
+        stage: ApplicationStage.SCREENED,
+        score: 65,
+      },
+    }),
+    prisma.application.upsert({
+      where: { id: "app5" },
+      update: {},
+      create: {
+        id: "app5",
+        tenantId: tenant.id,
+        jobId: jobs[2].id,
+        candidateId: candidates[4].id,
+        stage: ApplicationStage.NEW,
+        score: 0,
+      },
+    }),
+    prisma.application.upsert({
+      where: { id: "app6" },
+      update: {},
+      create: {
+        id: "app6",
+        tenantId: tenant.id,
+        jobId: jobs[0].id,
+        candidateId: candidates[3].id,
+        stage: ApplicationStage.REJECTED,
+        score: 45,
+        notes: "Not enough experience for senior role.",
+      },
+    }),
+  ]);
 
-  console.log('\nSeeding completed successfully!')
+  console.log(`Created ${applications.length} applications`);
+
+  // Create some interview slots for the first job
+  const interviewSlots = await Promise.all([
+    prisma.interviewSlot.create({
+      data: {
+        jobId: jobs[0].id,
+        startsAt: new Date(Date.now() + 86400000), // Tomorrow
+        endsAt: new Date(Date.now() + 86400000 + 3600000), // 1 hour slot
+        isBooked: false,
+      },
+    }),
+    prisma.interviewSlot.create({
+      data: {
+        jobId: jobs[0].id,
+        startsAt: new Date(Date.now() + 172800000), // Day after tomorrow
+        endsAt: new Date(Date.now() + 172800000 + 3600000),
+        isBooked: false,
+      },
+    }),
+  ]);
+
+  console.log(`Created ${interviewSlots.length} interview slots`);
+
+  console.log("\n✅ Database seeded successfully!");
+  console.log("\nSample data summary:");
+  console.log(`- Jobs: ${jobs.length}`);
+  console.log(`- Candidates: ${candidates.length}`);
+  console.log(`- Applications: ${applications.length}`);
+  console.log(`- Interview Slots: ${interviewSlots.length}`);
 }
 
 main()
   .catch((e) => {
-    console.error(e)
-    process.exit(1)
+    console.error(e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });
