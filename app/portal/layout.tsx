@@ -1,27 +1,19 @@
 export const dynamic = "force-dynamic";
 
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
+import { UserButton, auth } from "@clerk/nextjs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function DashboardLayout({
+export default async function PortalLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const session = await auth();
-  const orgId = session.orgId;
-  const orgRole = session.orgRole;
-
-  // If user is not an org member (admin/member), redirect to candidate portal
-  if (!orgRole || (orgRole !== "org:admin" && orgRole !== "org:member")) {
-    redirect("/portal");
-  }
-
-  // If no active org, redirect to select org page
-  if (!orgId) {
-    redirect("/select-org");
+  
+  // Check if user is an org member (admin/member), redirect to dashboard
+  if (session.orgRole === "org:admin" || session.orgRole === "org:member") {
+    redirect("/dashboard");
   }
 
   return (
@@ -32,47 +24,34 @@ export default async function DashboardLayout({
           <div className="flex justify-between items-center h-16">
             {/* Logo & Nav */}
             <div className="flex items-center gap-8">
-              <Link
-                href="/dashboard"
-                className="text-xl font-bold text-gray-900"
-              >
-                Recruiting Agent
+              <Link href="/portal" className="text-xl font-bold text-gray-900">
+                Recruiting Portal
               </Link>
 
               <nav className="hidden sm:flex items-center gap-6">
                 <Link
-                  href="/dashboard"
+                  href="/portal"
                   className="text-gray-600 hover:text-gray-900 font-medium"
                 >
                   Home
                 </Link>
                 <Link
-                  href="/dashboard/jobs"
+                  href="/portal/jobs"
                   className="text-gray-600 hover:text-gray-900 font-medium"
                 >
-                  Jobs
+                  Open Positions
                 </Link>
                 <Link
-                  href="/dashboard/applications"
+                  href="/portal/applications"
                   className="text-gray-600 hover:text-gray-900 font-medium"
                 >
-                  Applications
+                  My Applications
                 </Link>
               </nav>
             </div>
 
-            {/* Org Switcher & User Menu */}
+            {/* User Menu */}
             <div className="flex items-center gap-4">
-              <OrganizationSwitcher
-                hidePersonal={true}
-                afterSelectOrganizationUrl="/dashboard"
-                appearance={{
-                  elements: {
-                    organizationSwitcherTrigger:
-                      "px-3 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50",
-                  },
-                }}
-              />
               <UserButton
                 afterSignOutUrl="/"
                 appearance={{
@@ -89,22 +68,22 @@ export default async function DashboardLayout({
         <div className="sm:hidden border-t border-gray-200">
           <div className="flex justify-around py-3">
             <Link
-              href="/dashboard"
+              href="/portal"
               className="text-sm text-gray-600 hover:text-gray-900 font-medium"
             >
               Home
             </Link>
             <Link
-              href="/dashboard/jobs"
+              href="/portal/jobs"
               className="text-sm text-gray-600 hover:text-gray-900 font-medium"
             >
               Jobs
             </Link>
             <Link
-              href="/dashboard/applications"
+              href="/portal/applications"
               className="text-sm text-gray-600 hover:text-gray-900 font-medium"
             >
-              Applications
+              My Applications
             </Link>
           </div>
         </div>
