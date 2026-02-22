@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getTenantIdFromActiveOrg } from "@/lib/tenant";
 import { ApplicationStage } from "@prisma/client";
+import FilterForm from "./FilterForm";
 
 interface ApplicationsPageProps {
   searchParams: Promise<{
@@ -132,98 +133,8 @@ export default async function ApplicationsPage({
         </Link>
       </div>
 
-      {/* Filters */}
-      <div className="bg-gray-50 p-4 rounded-lg mb-6">
-        <form className="flex flex-wrap gap-4 items-end">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Job
-            </label>
-            <select
-              name="jobId"
-              defaultValue={filters.jobId || ""}
-              onChange={(e) => {
-                const params = new URLSearchParams(window.location.search);
-                if (e.target.value) {
-                  params.set("jobId", e.target.value);
-                } else {
-                  params.delete("jobId");
-                }
-                window.location.href = `/dashboard/applications?${params.toString()}`;
-              }}
-              className="border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Jobs</option>
-              {jobs.map((job) => (
-                <option key={job.id} value={job.id}>
-                  {job.title}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Stage
-            </label>
-            <select
-              name="stage"
-              defaultValue={filters.stage || ""}
-              onChange={(e) => {
-                const params = new URLSearchParams(window.location.search);
-                if (e.target.value) {
-                  params.set("stage", e.target.value);
-                } else {
-                  params.delete("stage");
-                }
-                window.location.href = `/dashboard/applications?${params.toString()}`;
-              }}
-              className="border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Stages</option>
-              {stages.map((stage) => (
-                <option key={stage} value={stage}>
-                  {stage}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Min Score
-            </label>
-            <select
-              name="minScore"
-              defaultValue={filters.minScore?.toString() || ""}
-              onChange={(e) => {
-                const params = new URLSearchParams(window.location.search);
-                if (e.target.value) {
-                  params.set("minScore", e.target.value);
-                } else {
-                  params.delete("minScore");
-                }
-                window.location.href = `/dashboard/applications?${params.toString()}`;
-              }}
-              className="border border-gray-300 rounded px-3 py-2 text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Any Score</option>
-              <option value="80">80+ (Excellent)</option>
-              <option value="60">60+ (Good)</option>
-              <option value="40">40+ (Fair)</option>
-            </select>
-          </div>
-
-          <div>
-            <Link
-              href="/dashboard/applications"
-              className="inline-block bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 font-medium"
-            >
-              Clear Filters
-            </Link>
-          </div>
-        </form>
-      </div>
+      {/* Filters - Client Component */}
+      <FilterForm filters={filters} jobs={jobs} stages={stages} />
 
       {applications.length === 0 ? (
         <p className="text-gray-600">
