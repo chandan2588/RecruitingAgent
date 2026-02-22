@@ -7,16 +7,20 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 function createPrismaClient(): PrismaClient {
-  // Get connection string from env
-  let connectionString = process.env.DATABASE_URL || ''
+  const connectionString = process.env.DATABASE_URL
   
-  // For Neon connections (postgresql:// or postgres://), use as-is
-  // For prisma+postgres:// (local dev), convert to TCP
-  if (connectionString.startsWith('prisma+postgres://')) {
-    connectionString = 'postgres://postgres:postgres@localhost:51214/template1?sslmode=disable'
+  if (!connectionString) {
+    throw new Error('DATABASE_URL environment variable is not set')
   }
   
-  const pool = new Pool({ connectionString })
+  // For Neon connections, SSL is required
+  const isNeon = connectionString.includes('neon.tech')
+  
+  const pool = new Pool({ 
+    connectionString,
+    ssl: isNeon ? { rejectUnauthorized: false } : undefined
+  })
+  
   const adapter = new PrismaPg(pool)
   
   return new PrismaClient({ adapter })

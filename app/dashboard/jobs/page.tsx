@@ -3,13 +3,6 @@ export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 
-async function getFirstTenant() {
-  const tenant = await prisma.tenant.findFirst({
-    orderBy: { createdAt: 'asc' },
-  })
-  return tenant
-}
-
 interface JobWithCreatedBy {
   id: string
   title: string
@@ -21,21 +14,62 @@ interface JobWithCreatedBy {
   }
 }
 
+async function getFirstTenant() {
+  try {
+    const tenant = await prisma.tenant.findFirst({
+      orderBy: { createdAt: 'asc' },
+    })
+    return tenant
+  } catch (error) {
+    console.error('Database error:', error)
+    return null
+  }
+}
+
 async function getJobs(tenantId: string): Promise<JobWithCreatedBy[]> {
-  const jobs = await prisma.job.findMany({
-    where: { tenantId },
-    orderBy: { createdAt: 'desc' },
-    include: {
-      createdBy: {
-        select: { name: true, email: true },
+  try {
+    const jobs = await prisma.job.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        createdBy: {
+          select: { name: true, email: true },
+        },
       },
-    },
-  })
-  return jobs as JobWithCreatedBy[]
+    })
+    return jobs as JobWithCreatedBy[]
+  } catch (error) {
+    console.error('Database error:', error)
+    return []
+  }
 }
 
 export default async function JobsPage() {
-  const tenant = await getFirstTenant()
+  let error = null
+  let tenant = null
+  let jobs: JobWithCreatedBy[] = []
+  
+  try {
+    tenant = await getFirstTenant()
+    if (tenant) {
+      jobs = await getJobs(tenant.id)
+    }
+  } catch (e) {
+    error = e instanceof Error ? e.message : 'Database connection error'
+  }
+  
+  if (error) {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Jobs</h1>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <p className="font-medium">Error connecting to database</p>
+          <p className="text-sm mt-1">{error}</p>
+          <p className="text-sm mt-2">Please make sure DATABASE_URL is set in environment variables.</p>
+        </div>
+      </div>
+    )
+  }
   
   if (!tenant) {
     return (
@@ -45,8 +79,6 @@ export default async function JobsPage() {
       </div>
     )
   }
-  
-  const jobs = await getJobs(tenant.id)
   
   return (
     <div className="p-8 max-w-6xl mx-auto">
